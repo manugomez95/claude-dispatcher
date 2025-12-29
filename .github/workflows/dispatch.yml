@@ -1,0 +1,36 @@
+name: Dispatch Linear Tasks to Claude
+
+on:
+  # Run every 3 hours
+  schedule:
+    - cron: '0 */3 * * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run dispatcher
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          CLAUDE_USER_ID: ${{ secrets.CLAUDE_USER_ID }}
+          LINEAR_PROJECT_IDS: ${{ vars.LINEAR_PROJECT_IDS }}
+          LINEAR_TEAM_KEYS: ${{ vars.LINEAR_TEAM_KEYS }}
+        run: npm run dispatch
