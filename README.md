@@ -36,13 +36,14 @@ Automatically dispatches your highest-priority Linear tasks to a Slack channel, 
 
 ### 2. Create Slack App
 
+> **Important:** You need a **User Token** (`xoxp-...`), not a Bot Token. Claude's Slack integration ignores bot messages to prevent loops, so messages must appear from a human user.
+
 1. Go to [api.slack.com/apps](https://api.slack.com/apps) → Create New App
 2. Choose "From scratch"
-3. Add OAuth scopes under **OAuth & Permissions**:
-   - `chat:write` (post messages)
-   - `users:read` (optional, to resolve user mentions)
+3. Under **OAuth & Permissions**, scroll to **User Token Scopes** (not Bot Token Scopes):
+   - `chat:write` (post messages as yourself)
 4. Install to your workspace
-5. Copy the **Bot User OAuth Token** (`xoxb-...`)
+5. Copy the **User OAuth Token** (`xoxp-...`)
 
 ### 3. Get Slack IDs
 
@@ -89,7 +90,7 @@ npm run dispatch
 1. Push this repo to GitHub
 2. Add secrets in Settings → Secrets and variables → Actions:
    - `LINEAR_API_KEY`
-   - `SLACK_BOT_TOKEN`
+   - `SLACK_USER_TOKEN`
    - `SLACK_CHANNEL_ID`
    - `CLAUDE_USER_ID`
 3. Optionally add variables:
@@ -120,9 +121,11 @@ By default, selects the highest-priority unassigned task. Modify `getHighestPrio
 
 ```typescript
 const filter = {
-  state: { type: { in: ["unstarted", "started"] } },
+  state: { type: { in: ["backlog", "unstarted", "started"] } },
   // Remove this line to include assigned tasks:
   assignee: { null: true },
+  // Only tasks with a priority set:
+  priority: { neq: 0 },
   // Add label filter:
   labels: { name: { in: ["claude-ready"] } },
 };
@@ -163,17 +166,18 @@ for (const issue of issues.nodes) {
 
 **"No tasks to dispatch"**
 - Check LINEAR_PROJECT_IDS and LINEAR_TEAM_KEYS filters
-- Verify tasks are in "unstarted" or "started" state
+- Verify tasks are in "backlog", "unstarted", or "started" state
 - Check if tasks are assigned (default filters to unassigned)
+- Ensure tasks have a priority set (Urgent/High/Medium/Low)
 
 **Slack API errors**
-- Verify bot is invited to the channel (`/invite @yourbot`)
-- Check bot has `chat:write` scope
+- Check user token has `chat:write` scope
 - Verify SLACK_CHANNEL_ID is correct
 
 **Claude not responding**
+- Ensure you're using a **User Token** (`xoxp-...`), not a Bot Token — Claude ignores bot messages
 - Ensure your Claude Code Slack integration is active
-- Verify CLAUDE_USER_ID is the correct bot user ID
+- Verify CLAUDE_USER_ID is the correct user ID for @claude
 - Check the channel is configured for Claude Code triggers
 
 ## License
