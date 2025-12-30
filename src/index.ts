@@ -99,7 +99,7 @@ function formatSlackMessage(issue: LinearIssue): string {
   const projectInfo = issue.project ? ` in project "${issue.project.name}"` : "";
   const teamInfo = issue.team ? ` [${issue.team.key}]` : "";
 
-  let message = `<@${CONFIG.CLAUDE_USER_ID}>${projectInfo}${teamInfo}, work on: ${issue.title}`;
+  let message = `<@${CONFIG.CLAUDE_USER_ID}>${projectInfo}${teamInfo}, work on ${issue.identifier}: ${issue.title}`;
 
   if (issue.description) {
     // Truncate long descriptions
@@ -110,6 +110,9 @@ function formatSlackMessage(issue: LinearIssue): string {
         : issue.description;
     message += `\n\n${desc}`;
   }
+
+  // Add branch naming instruction for Linear integration
+  message += `\n\nWhen creating a branch, use: ${issue.identifier.toLowerCase()}-<short-description>`;
 
   return message;
 }
