@@ -1,9 +1,11 @@
 name: Dispatch Linear Tasks to Claude
 
 on:
-  # Run every 3 hours
+  # Run every hour from 11 PM to 6 AM Madrid time (CET/CEST)
+  # UTC times: 22:00-05:00 (winter) / 21:00-04:00 (summer)
+  # Using winter hours (UTC+1) - will shift by 1 hour in summer
   schedule:
-    - cron: '0 */3 * * *'
+    - cron: '0 22,23,0,1,2,3,4,5 * * *'
 
   # Allow manual trigger
   workflow_dispatch:
