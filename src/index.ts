@@ -134,11 +134,30 @@ async function postToSlack(message: string): Promise<void> {
 }
 
 /**
- * Adds a comment to the Linear issue indicating it was dispatched
+ * Marks the issue as In Progress and adds a dispatch comment
  */
 async function markIssueAsDispatched(issueId: string): Promise<void> {
-  console.log("Adding dispatch comment to Linear issue...");
+  console.log("Marking issue as In Progress...");
 
+  // Get the issue to find its team's "In Progress" state
+  const issue = await linearClient.issue(issueId);
+  const team = await issue.team;
+
+  if (team) {
+    const states = await team.states();
+    const inProgressState = states.nodes.find(
+      (s) => s.type === "started" && s.name.toLowerCase().includes("progress")
+    ) || states.nodes.find((s) => s.type === "started");
+
+    if (inProgressState) {
+      await linearClient.updateIssue(issueId, {
+        stateId: inProgressState.id,
+      });
+      console.log(`Issue state updated to: ${inProgressState.name}`);
+    }
+  }
+
+  // Add dispatch comment
   await linearClient.createComment({
     issueId,
     body: "🤖 Task dispatched to Claude via Slack",
