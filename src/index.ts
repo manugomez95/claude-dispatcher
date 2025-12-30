@@ -7,7 +7,7 @@ dotenv.config();
 // Configuration from environment variables
 const CONFIG = {
   LINEAR_API_KEY: process.env.LINEAR_API_KEY || "",
-  SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN || "",
+  SLACK_USER_TOKEN: process.env.SLACK_USER_TOKEN || "", // Use xoxp- user token, not xoxb- bot token
   SLACK_CHANNEL_ID: process.env.SLACK_CHANNEL_ID || "",
   CLAUDE_USER_ID: process.env.CLAUDE_USER_ID || "",
   LINEAR_PROJECT_IDS: process.env.LINEAR_PROJECT_IDS?.split(",").filter(Boolean) || [],
@@ -16,7 +16,7 @@ const CONFIG = {
 
 // Validate required configuration
 function validateConfig(): void {
-  const required = ["LINEAR_API_KEY", "SLACK_BOT_TOKEN", "SLACK_CHANNEL_ID", "CLAUDE_USER_ID"];
+  const required = ["LINEAR_API_KEY", "SLACK_USER_TOKEN", "SLACK_CHANNEL_ID", "CLAUDE_USER_ID"];
   const missing = required.filter((key) => !CONFIG[key as keyof typeof CONFIG]);
 
   if (missing.length > 0) {
@@ -26,7 +26,7 @@ function validateConfig(): void {
 
 // Initialize clients
 const linearClient = new LinearClient({ apiKey: CONFIG.LINEAR_API_KEY });
-const slackClient = new WebClient(CONFIG.SLACK_BOT_TOKEN);
+const slackClient = new WebClient(CONFIG.SLACK_USER_TOKEN);
 
 interface LinearIssue {
   id: string;
@@ -47,8 +47,9 @@ async function getHighestPriorityTask(): Promise<LinearIssue | null> {
 
   // Build the filter
   const filter: Record<string, unknown> = {
-    state: { type: { in: ["unstarted", "started"] } },
+    state: { type: { in: ["backlog", "unstarted", "started"] } },
     assignee: { null: true }, // Only unassigned tasks
+    priority: { neq: 0 }, // Ignore tasks with no priority
   };
 
   // Add project filter if specified
@@ -72,13 +73,8 @@ async function getHighestPriorityTask(): Promise<LinearIssue | null> {
     return null;
   }
 
-  // Sort by priority (1 = urgent, 4 = low, 0 = no priority)
-  // Priority order: 1 > 2 > 3 > 4 > 0
-  const sortedIssues = [...issues.nodes].sort((a, b) => {
-    const priorityA = a.priority === 0 ? 5 : a.priority;
-    const priorityB = b.priority === 0 ? 5 : b.priority;
-    return priorityA - priorityB;
-  });
+  // Sort by priority (1 = urgent, 2 = high, 3 = medium, 4 = low)
+  const sortedIssues = [...issues.nodes].sort((a, b) => a.priority - b.priority);
 
   const topIssue = sortedIssues[0];
   const project = await topIssue.project;
