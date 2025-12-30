@@ -133,7 +133,9 @@ const filter = {
 
 ### Message Format
 
-Customize `formatSlackMessage()` to change how tasks are presented to Claude:
+Customize `formatSlackMessage()` to change how tasks are presented to Claude.
+
+> **Note:** Claude cannot access external links, so the task title and description should contain all necessary context. The Linear URL is not included in the message.
 
 ```typescript
 function formatSlackMessage(issue: LinearIssue): string {

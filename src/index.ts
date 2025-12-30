@@ -103,15 +103,13 @@ function formatSlackMessage(issue: LinearIssue): string {
 
   if (issue.description) {
     // Truncate long descriptions
-    const maxDescLength = 500;
+    const maxDescLength = 2000;
     const desc =
       issue.description.length > maxDescLength
         ? issue.description.substring(0, maxDescLength) + "..."
         : issue.description;
     message += `\n\n${desc}`;
   }
-
-  message += `\n\nLinear: ${issue.url}`;
 
   return message;
 }
