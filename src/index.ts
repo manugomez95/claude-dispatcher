@@ -35,6 +35,7 @@ interface LinearIssue {
   description?: string;
   priority: number;
   url: string;
+  branchName: string;
   project?: { name: string } | null;
   team?: { key: string; name: string } | null;
 }
@@ -87,6 +88,7 @@ async function getHighestPriorityTask(): Promise<LinearIssue | null> {
     description: topIssue.description ?? undefined,
     priority: topIssue.priority,
     url: topIssue.url,
+    branchName: topIssue.branchName,
     project: project ? { name: project.name } : null,
     team: team ? { key: team.key, name: team.name } : null,
   };
@@ -112,7 +114,7 @@ function formatSlackMessage(issue: LinearIssue): string {
   }
 
   // Add branch naming instruction for Linear integration
-  message += `\n\nIMPORTANT: You MUST name the git branch exactly as: ${issue.identifier.toLowerCase()}-<short-description> (e.g., ${issue.identifier.toLowerCase()}-fix-bug). This is required for Linear to track the issue.`;
+  message += `\n\nIMPORTANT: You MUST name the git branch exactly: ${issue.branchName}`;
 
   return message;
 }
