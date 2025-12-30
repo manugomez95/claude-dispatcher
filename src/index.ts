@@ -112,7 +112,7 @@ function formatSlackMessage(issue: LinearIssue): string {
   }
 
   // Add branch naming instruction for Linear integration
-  message += `\n\nWhen creating a branch, use: ${issue.identifier.toLowerCase()}-<short-description>`;
+  message += `\n\nIMPORTANT: You MUST name the git branch exactly as: ${issue.identifier.toLowerCase()}-<short-description> (e.g., ${issue.identifier.toLowerCase()}-fix-bug). This is required for Linear to track the issue.`;
 
   return message;
 }
