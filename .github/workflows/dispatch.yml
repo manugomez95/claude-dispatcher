@@ -28,7 +28,7 @@ jobs:
       - name: Run dispatcher
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_USER_TOKEN: ${{ secrets.SLACK_USER_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
           CLAUDE_USER_ID: ${{ secrets.CLAUDE_USER_ID }}
           LINEAR_PROJECT_IDS: ${{ vars.LINEAR_PROJECT_IDS }}
