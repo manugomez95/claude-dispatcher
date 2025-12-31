@@ -47,7 +47,7 @@ async function getHighestPriorityTask(): Promise<LinearIssue | null> {
 
   // Build the filter
   const filter: Record<string, unknown> = {
-    state: { type: { in: ["backlog", "unstarted", "started"] } },
+    state: { type: { in: ["backlog", "unstarted"] } },
     assignee: { null: true }, // Only unassigned tasks
     priority: { neq: 0 }, // Ignore tasks with no priority
   };
