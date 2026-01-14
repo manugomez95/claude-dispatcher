@@ -6,6 +6,8 @@
   "scripts": {
     "build": "tsc",
     "dispatch": "ts-node src/index.ts",
+    "dispatch:linear": "TASK_SOURCE=linear ts-node src/index.ts",
+    "dispatch:github": "TASK_SOURCE=github ts-node src/index.ts",
     "start": "node dist/index.js"
   },
   "keywords": [
