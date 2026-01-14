@@ -81,12 +81,12 @@ LINEAR_TEAM_KEYS=ENG,PRODUCT
 
 ```bash
 TASK_SOURCE=github
-GITHUB_TOKEN=ghp_xxxxxxxxxxxx
-GITHUB_OWNER=your-username
-GITHUB_REPO=your-repo
+GH_TOKEN=ghp_xxxxxxxxxxxx
+GH_OWNER=your-username
+GH_REPO=your-repo
 
 # Optional: Custom label for ready issues (default: claude-ready)
-GITHUB_READY_LABEL=claude-ready
+GH_READY_LABEL=claude-ready
 ```
 
 **GitHub Priority Labels:**
@@ -135,15 +135,16 @@ npm run dispatch
    - `LINEAR_API_KEY`
 
    **For GitHub Issues:**
-   - `GITHUB_TOKEN`
-   - `GITHUB_OWNER`
-   - `GITHUB_REPO`
+   - `GH_DISPATCH_TOKEN` (secret) - classic PAT with `repo` scope
 
 3. Add variables:
    - `TASK_SOURCE` (set to `linear` or `github`)
    - `LINEAR_PROJECT_IDS` (optional)
    - `LINEAR_TEAM_KEYS` (optional)
-   - `GITHUB_READY_LABEL` (optional)
+   - `GH_OWNER` - repo owner
+   - `GH_REPO` - repo name
+   - `GH_READY_LABEL` (optional)
+   - `GH_DISPATCH_ENABLED` - set to `true` to enable scheduled runs
 
 The workflow runs every 3 hours. Edit `.github/workflows/dispatch.yml` to change the schedule:
 

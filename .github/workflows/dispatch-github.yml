@@ -11,8 +11,8 @@ on:
 jobs:
   dispatch:
     runs-on: ubuntu-latest
-    # Only run if GITHUB_DISPATCH_ENABLED is set to true
-    if: vars.GITHUB_DISPATCH_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    # Only run if GH_DISPATCH_ENABLED is set to true
+    if: vars.GH_DISPATCH_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout repository
@@ -30,10 +30,10 @@ jobs:
       - name: Dispatch GitHub task
         env:
           TASK_SOURCE: github
-          GITHUB_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
-          GITHUB_OWNER: ${{ vars.GITHUB_OWNER }}
-          GITHUB_REPO: ${{ vars.GITHUB_REPO }}
-          GITHUB_READY_LABEL: ${{ vars.GITHUB_READY_LABEL }}
+          GH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          GH_OWNER: ${{ vars.GH_OWNER }}
+          GH_REPO: ${{ vars.GH_REPO }}
+          GH_READY_LABEL: ${{ vars.GH_READY_LABEL }}
           SLACK_USER_TOKEN: ${{ secrets.SLACK_USER_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
           CLAUDE_USER_ID: ${{ secrets.CLAUDE_USER_ID }}

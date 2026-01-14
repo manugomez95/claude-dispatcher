@@ -24,10 +24,10 @@ const CONFIG = {
   LINEAR_TEAM_KEYS: process.env.LINEAR_TEAM_KEYS?.split(",").filter(Boolean) || [],
 
   // GitHub config
-  GITHUB_TOKEN: process.env.GITHUB_TOKEN || "",
-  GITHUB_OWNER: process.env.GITHUB_OWNER || "",
-  GITHUB_REPO: process.env.GITHUB_REPO || "",
-  GITHUB_READY_LABEL: process.env.GITHUB_READY_LABEL || "claude-ready",
+  GITHUB_TOKEN: process.env.GH_TOKEN || "",
+  GITHUB_OWNER: process.env.GH_OWNER || "",
+  GITHUB_REPO: process.env.GH_REPO || "",
+  GITHUB_READY_LABEL: process.env.GH_READY_LABEL || "claude-ready",
 };
 
 // Priority label mapping for GitHub (label name -> priority number)
