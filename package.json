@@ -8,11 +8,17 @@
     "dispatch": "ts-node src/index.ts",
     "start": "node dist/index.js"
   },
-  "keywords": ["linear", "slack", "claude", "automation"],
+  "keywords": [
+    "linear",
+    "slack",
+    "claude",
+    "automation"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@linear/sdk": "^68.1.0",
+    "@octokit/rest": "^22.0.1",
     "@slack/web-api": "^7.13.0",
     "dotenv": "^17.2.3"
   },
