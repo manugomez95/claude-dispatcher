@@ -1,17 +1,17 @@
-# Linear → Slack → Claude Dispatcher
+# Task → Slack → Claude Dispatcher
 
-Automatically dispatches your highest-priority Linear tasks to a Slack channel, mentioning @claude to trigger a Claude Code web session.
+Automatically dispatches your highest-priority tasks from **Linear** or **GitHub Issues** to a Slack channel, mentioning @claude to trigger a Claude Code web session.
 
 ## How It Works
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│  Linear Tasks   │────▶│  This Script    │────▶│  Slack Channel  │
-│  (by priority)  │     │  (scheduled)    │     │  @claude        │
-│                 │     │                 │     │                 │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                        │
+│  Linear Tasks   │     │                 │     │                 │
+│  (by priority)  │────▶│  This Script    │────▶│  Slack Channel  │
+├─────────────────┤     │  (scheduled)    │     │  @claude        │
+│  GitHub Issues  │────▶│                 │     │                 │
+│  (by labels)    │     └─────────────────┘     └─────────────────┘
+└─────────────────┘                                     │
                                                         ▼
                                                 ┌─────────────────┐
                                                 │                 │
@@ -22,17 +22,17 @@ Automatically dispatches your highest-priority Linear tasks to a Slack channel, 
 ```
 
 1. **Scheduler runs** (every 3 hours or custom interval)
-2. **Fetches from Linear** the highest-priority unstarted/in-progress task
+2. **Fetches from Linear or GitHub** the highest-priority task
 3. **Posts to Slack** with `@claude In project X, work on: <task>`
 4. **Claude Code activates** automatically via your existing Slack integration
 
 ## Setup
 
-### 1. Create Linear API Key
+### 1. Choose Your Task Source
 
-1. Go to Linear → Settings → API → Personal API keys
-2. Create a new key with read access to issues
-3. Copy the `lin_api_...` token
+Set `TASK_SOURCE` in your environment:
+- `linear` (default) - Use Linear for task management
+- `github` - Use GitHub Issues
 
 ### 2. Create Slack App
 
@@ -56,24 +56,60 @@ Automatically dispatches your highest-priority Linear tasks to a Slack channel, 
 - Use Slack's API or inspect the network request to find the user ID (`U0XXXXXXXXX`)
 - Alternatively: Slack App → Your App → Features → App Home → shows the bot user ID
 
-### 4. Configure Environment
+### 4. Configure Task Source
+
+#### Option A: Linear Setup
+
+1. Go to Linear → Settings → API → Personal API keys
+2. Create a new key with read access to issues
+3. Copy the `lin_api_...` token
+
+```bash
+TASK_SOURCE=linear
+LINEAR_API_KEY=lin_api_xxxxxxxxxxxx
+
+# Optional: Filter to specific projects/teams
+LINEAR_PROJECT_IDS=proj_abc123,proj_def456
+LINEAR_TEAM_KEYS=ENG,PRODUCT
+```
+
+#### Option B: GitHub Issues Setup
+
+1. Go to [github.com/settings/tokens](https://github.com/settings/tokens)
+2. Create a Personal Access Token with `repo` scope
+3. Copy the `ghp_...` token
+
+```bash
+TASK_SOURCE=github
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+GITHUB_OWNER=your-username
+GITHUB_REPO=your-repo
+
+# Optional: Custom label for ready issues (default: claude-ready)
+GITHUB_READY_LABEL=claude-ready
+```
+
+**GitHub Priority Labels:**
+
+The dispatcher sorts GitHub issues by priority labels:
+- `priority:urgent` - Highest priority (1)
+- `priority:high` - High priority (2)
+- `priority:medium` or `priority:normal` - Medium priority (3)
+- `priority:low` - Low priority (4)
+
+Issues without priority labels default to medium priority.
+
+**GitHub Workflow:**
+1. Add the `claude-ready` label to issues you want dispatched
+2. Optionally add priority labels to control order
+3. When dispatched, the `claude-ready` label is removed and `in-progress` is added
+
+### 5. Configure Environment
 
 Copy `.env.example` to `.env` and fill in your values:
 
 ```bash
 cp .env.example .env
-```
-
-### 5. Optional: Filter Projects/Teams
-
-Set these to limit which tasks are considered:
-
-```bash
-# Only these project IDs (comma-separated)
-LINEAR_PROJECT_IDS=proj_abc123,proj_def456
-
-# Only these team keys (comma-separated)
-LINEAR_TEAM_KEYS=ENG,PRODUCT
 ```
 
 ## Running
@@ -89,13 +125,25 @@ npm run dispatch
 
 1. Push this repo to GitHub
 2. Add secrets in Settings → Secrets and variables → Actions:
-   - `LINEAR_API_KEY`
+
+   **Required (always):**
    - `SLACK_USER_TOKEN`
    - `SLACK_CHANNEL_ID`
    - `CLAUDE_USER_ID`
-3. Optionally add variables:
-   - `LINEAR_PROJECT_IDS`
-   - `LINEAR_TEAM_KEYS`
+
+   **For Linear:**
+   - `LINEAR_API_KEY`
+
+   **For GitHub Issues:**
+   - `GITHUB_TOKEN`
+   - `GITHUB_OWNER`
+   - `GITHUB_REPO`
+
+3. Add variables:
+   - `TASK_SOURCE` (set to `linear` or `github`)
+   - `LINEAR_PROJECT_IDS` (optional)
+   - `LINEAR_TEAM_KEYS` (optional)
+   - `GITHUB_READY_LABEL` (optional)
 
 The workflow runs every 3 hours. Edit `.github/workflows/dispatch.yml` to change the schedule:
 
@@ -115,9 +163,9 @@ schedule:
 
 ## Customization
 
-### Priority Selection
+### Priority Selection (Linear)
 
-By default, selects the highest-priority unassigned task. Modify `getHighestPriorityTask()` in `src/index.ts`:
+By default, selects the highest-priority unassigned task. Modify `getHighestPriorityLinearTask()` in `src/index.ts`:
 
 ```typescript
 const filter = {
@@ -131,46 +179,45 @@ const filter = {
 };
 ```
 
+### Priority Selection (GitHub)
+
+Modify `getHighestPriorityGitHubTask()` in `src/index.ts` to change filtering:
+
+```typescript
+const { data: issues } = await client.rest.issues.listForRepo({
+  owner: CONFIG.GITHUB_OWNER,
+  repo: CONFIG.GITHUB_REPO,
+  state: "open",
+  labels: CONFIG.GITHUB_READY_LABEL,
+  assignee: "none",  // Only unassigned issues
+  sort: "created",
+  direction: "asc",
+  per_page: 50,
+});
+```
+
 ### Message Format
 
 Customize `formatSlackMessage()` to change how tasks are presented to Claude.
 
-> **Note:** Claude cannot access external links, so the task title and description should contain all necessary context. The Linear URL is not included in the message.
+> **Note:** Claude cannot access external links, so the task title and description should contain all necessary context.
 
 ```typescript
-function formatSlackMessage(issue: LinearIssue): string {
+function formatSlackMessage(task: Task): string {
   return `<@${CONFIG.CLAUDE_USER_ID}> Please work on this task:
 
-Task: ${issue.title}
-Description: ${issue.description}
+Task: ${task.title}
+Description: ${task.description}
 
 Additional context: Focus on test coverage and documentation.`;
-}
-```
-
-### Avoiding Duplicate Dispatches
-
-The script adds a comment to dispatched issues. To skip already-dispatched tasks, add this filter:
-
-```typescript
-// In getHighestPriorityTask(), after fetching issues:
-const undispatchedIssues = [];
-for (const issue of issues.nodes) {
-  const comments = await issue.comments();
-  const wasDispatched = comments.nodes.some(c =>
-    c.body.includes("🤖 Task dispatched to Claude")
-  );
-  if (!wasDispatched) undispatchedIssues.push(issue);
 }
 ```
 
 ## Troubleshooting
 
 **"No tasks to dispatch"**
-- Check LINEAR_PROJECT_IDS and LINEAR_TEAM_KEYS filters
-- Verify tasks are in "backlog", "unstarted", or "started" state
-- Check if tasks are assigned (default filters to unassigned)
-- Ensure tasks have a priority set (Urgent/High/Medium/Low)
+- **Linear:** Check LINEAR_PROJECT_IDS and LINEAR_TEAM_KEYS filters; verify tasks are in "backlog"/"unstarted" state; check if tasks are assigned; ensure tasks have a priority set
+- **GitHub:** Ensure issues have the `claude-ready` label; check GITHUB_OWNER and GITHUB_REPO are correct
 
 **Slack API errors**
 - Check user token has `chat:write` scope
@@ -181,6 +228,10 @@ for (const issue of issues.nodes) {
 - Ensure your Claude Code Slack integration is active
 - Verify CLAUDE_USER_ID is the correct user ID for @claude
 - Check the channel is configured for Claude Code triggers
+
+**GitHub label errors**
+- Ensure the `claude-ready` label exists in your repository
+- Optionally create an `in-progress` label for dispatched issues
 
 ## License
 
